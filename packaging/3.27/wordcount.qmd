@@ -1,0 +1,85 @@
+; SPDX-License-Identifier: GPL-3.0-only
+; Firmware adapter for 3.27.3.0 (also accepts the supplied spelling 3.27.30).
+; See docs/compatibility.md. No proprietary QML is distributed.
+
+VERSION 3.27.3.0
+VERSION 3.27.30
+
+; Persist the toggle on the notebook toolbar, shared by both menu layouts.
+AFFECT [[11313888899523275277]]
+    IMPORT Qt.labs.settings 1.0 RmWordCountPrefs
+    TRAVERSE [[8397993708429497603]]#[[6504254477]]
+        LOCATE AFTER ALL
+        INSERT {
+            property alias rmWordCountEnabled: rmWordCountSettings.counterEnabled
+            RmWordCountPrefs.Settings {
+                id: rmWordCountSettings
+                fileName: "/home/root/.config/rm-wordcount.conf"
+                category: "WordCount"
+                property bool counterEnabled: false
+            }
+        }
+    END TRAVERSE
+END AFFECT
+
+; Notebook settings/context menu.
+AFFECT [[11704595946725378272]]
+    TRAVERSE [[454089850271038938]]#[[6504254477]] > [[254480451320573660]]#[[16710723433319324941]] > [[14125623155555875541]]#[[233724020048228]]
+        LOCATE AFTER ALL
+        INSERT {
+            ~&425121728314878811&~.~&432643201877711221&~ {
+                ~&214632764553&~: ~&6504254477&~.~&233745975898428&~.rmWordCountEnabled ? "Hide word count" : "Show word count"
+                ~&254542236275632405&~: {
+                    ~&6504254477&~.~&233745975898428&~.rmWordCountEnabled = !~&6504254477&~.~&233745975898428&~.rmWordCountEnabled;
+                    ~&6504254477&~.~&233745975898428&~.~&15738511857451076348&~();
+                }
+            }
+        }
+    END TRAVERSE
+END AFFECT
+
+; The compact/landscape More Tools menu.
+AFFECT [[6025599999262907645]]
+    TRAVERSE [[454089850271038938]]#[[6504254477]] > [[14125623155555875541]]
+        LOCATE AFTER ALL
+        INSERT {
+            ~&425121728314878811&~.~&432643201877711221&~ {
+                ~&214632764553&~: ~&6504254477&~.~&233745975898428&~.rmWordCountEnabled ? "Hide word count" : "Show word count"
+                ~&254542236275632405&~: {
+                    ~&6504254477&~.~&233745975898428&~.rmWordCountEnabled = !~&6504254477&~.~&233745975898428&~.rmWordCountEnabled;
+                    ~&6504254477&~.~&233745975898428&~.~&15738511857451076348&~();
+                }
+            }
+        }
+    END TRAVERSE
+END AFFECT
+
+; Screen-space overlay: doesn't scroll/zoom with the page or take input.
+AFFECT [[1224665461898798997]]
+    TRAVERSE [[8397993708429497603]]#[[6504254477]]
+        LOCATE AFTER ALL
+        INSERT {
+            Loader {
+                id: rmWordCountLoader
+                anchors.fill: parent
+                z: 10
+                active: ~&233745975898428&~.rmWordCountEnabled
+                source: "file:///home/root/xovi/exthome/qt-resource-rebuilder/rm-wordcount/Counter.qml"
+                property string rmDocumentId: {
+                    var doc = ~&254547437090201330&~.~&7712934851008712&~;
+                    return doc ? doc.~&5972374&~ : "";
+                }
+                property string rmPageId: {
+                    var doc = ~&254547437090201330&~.~&7712934851008712&~;
+                    var index = ~&254547437090201330&~.~&6504167078&~;
+                    return doc && index >= 0 ? doc.~&254533375641282938&~(index) : "";
+                }
+                onLoaded: {
+                    item.documentId = Qt.binding(function() { return rmWordCountLoader.rmDocumentId; });
+                    item.pageId = Qt.binding(function() { return rmWordCountLoader.rmPageId; });
+                    item.countingEnabled = true;
+                }
+            }
+        }
+    END TRAVERSE
+END AFFECT
